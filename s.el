@@ -502,17 +502,20 @@ transformation."
 
 (defun s-lex-fmt|expand (fmt)
   "Expand FMT into lisp."
-  (list 's-format fmt (quote 'aget)
-        (append '(list)
-                (mapcar
-                 (lambda (matches)
-                   (list
-                    'cons
-                    (cadr matches)
-                    `(format
-                      (if s-lex-value-as-lisp "%S" "%s")
-                      ,(intern (cadr matches)))))
-                 (s-match-strings-all "${\\([^}]+\\)}" fmt)))))
+  (let ((strs (s-match-strings-all "${\\([^}]+\\)}" fmt)))
+    (list
+     's-format fmt (quote 'aget)
+     (append
+      '(list)
+      (mapcar
+       (lambda (matches)
+         (list
+          'cons
+          (cadr matches)
+          `(format
+            (if s-lex-value-as-lisp "%S" "%s")
+            ,(intern (cadr matches)))))
+       strs)))))
 
 (defmacro s-lex-format (format-str)
   "`s-format' with the lexical environment.
@@ -526,7 +529,7 @@ any lexical variable:
 The values of the lexical variables are interpolated with \"%s\"
 unless the variable `s-lex-value-as-lisp' is `t' and then they
 are interpolated with \"%S\"."
-  (s-lex-fmt|expand format-str))
+  (s-lex-fmt|expand (eval format-str)))
 
 (provide 's)
 ;;; s.el ends here
